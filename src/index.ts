@@ -97,7 +97,7 @@ function zodParseToValidate<
 const booleanPrompt: InputPimaryPrompt<ZodBoolean> = async (message, schema, abortController?): Promise<boolean> => {
     return await confirm({
         message,
-    }, {signal: abortController?.signal})
+    }, { signal: abortController?.signal })
 }
 
 
@@ -153,7 +153,7 @@ const enumPrompt: InputPimaryPrompt<ZodEnum> = async (message, schema, abortCont
 async function arrayPrompt<
     S extends CompatibleZodArray,
 >(message: string, schema: S, indentCount: number): Promise<z.infer<S['element'][]>> {
-    
+
     // Determines the prompt fn based on the element type of the array schema
     let prompt: InputPimaryPrompt<S['element']>;
     switch (true) {
@@ -179,17 +179,17 @@ async function arrayPrompt<
     const results: z.infer<S['element']>[] = [];
 
     // Prompt for array elements until the user decides to stop (AbortError or ExitPromptError triggered by Ctrl+C)
-    while(true){
+    while (true) {
         const controller = new AbortController();
-        try{
+        try {
             const result = await prompt(getIndent(indentCount), schema.element, controller)
             results.push(result);
         }
-        catch(error: any){
-            if(error.name === 'AbortError' || error.message === 'AbortError' || error.name  === 'ExitPromptError'){
+        catch (error: any) {
+            if (error.name === 'AbortError' || error.message === 'AbortError' || error.name === 'ExitPromptError') {
                 break;
             }
-        }    
+        }
     }
     return results
 }
@@ -238,18 +238,18 @@ function getInputMessage(indentCount: number, defaultMessage: string, propertyLa
     defaultMessage = defaultMessage.trim().replace(/[:;\s]+$/, '');
     message += mandatoryMessage ? mandatoryMessage.trim().replace(/[:;\s]+$/, '') + ' | ' : '';
 
-    if(typeof propertyLabel === 'string') {
+    if (typeof propertyLabel === 'string') {
         message += propertyLabel.replace(/[:;\s]+$/, '');
     }
-    else if(propertyLabel){
-        if(propertyLabel.overiteDefault){
+    else if (propertyLabel) {
+        if (propertyLabel.overiteDefault) {
             message += propertyLabel.value.trim().replace(/[:;\s]+$/, '');
         }
-        else{
+        else {
             message += `${propertyLabel.value} (${defaultMessage})`;
         }
     }
-    else{
+    else {
         message += defaultMessage;
     }
     return (getIndent(indentCount) + message + ": ")
@@ -286,7 +286,7 @@ async function schemaWalker<
             }
             console.log(getBrace('}', indentCount));
             return object as T;
-        
+
         // For arrays, use the arrayPrompt function
         case schema instanceof ZodArray:
             console.log(getBrace('[', indentCount));
@@ -297,7 +297,7 @@ async function schemaWalker<
             )
             console.log(getBrace(']', indentCount));
             return arr as T
-            
+
         default:
             throw new Error(`Unsupported schema type.`);
     }
@@ -357,7 +357,7 @@ async function schemaWalker<
  */
 async function promptsFromZod<
     S extends CompatibleZodTypes,
->(schema: S, propertyLabel?: InputLabelsForSchema<S>, doConfirm:boolean = true): Promise<z.infer<S>> {
+>(schema: S, propertyLabel?: InputLabelsForSchema<S>, doConfirm: boolean = true): Promise<z.infer<S>> {
     console.log(chalk.red('============================='))
 
     const results = await schemaWalker(schema, propertyLabel)
@@ -365,15 +365,15 @@ async function promptsFromZod<
     console.log(chalk.red('============================='))
 
     let restart = false;
-    if(doConfirm){
+    if (doConfirm) {
         restart = await confirm({
             message: chalk.green('Are you sure you want to submit the data? (no to restart)'),
         })
     }
 
-    if(restart){
+    if (restart) {
         return promptsFromZod(schema, propertyLabel, doConfirm);
-    }    
+    }
 
     return results;
 }
