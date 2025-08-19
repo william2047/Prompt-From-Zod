@@ -118,8 +118,9 @@ const enumPrompt: InputPimaryPrompt<ZodEnum> = async (message, schema, abortCont
 
 
 async function arrayPrompt<
-    S extends CompatibleZodArray
->(message: string, schema: S): Promise<z.infer<S>> {
+    S extends CompatibleZodArray,
+    T = z.infer<S["element"]>
+>(message: string, schema: S, indentCount: number): Promise<T[]> {
     
     let prompt: InputPimaryPrompt<CompatibleZodPrimary>;
     switch (true) {
@@ -141,16 +142,18 @@ async function arrayPrompt<
 
 
     console.log(message);
-    const results = [];
+    const results: T[] = [];
 
     while(true){
         const controller = new AbortController();
         try{
-            const result = await prompt('', schema.element, { signal: controller.signal });
+            const result = await prompt(getIndent(indentCount), schema.element, controller) as T;
             results.push(result);
         }
-        catch(){
-
+        catch(error: any){
+            if(error.name === 'AbortError' || error.message === 'AbortError' || error.name  === 'ExitPromptError'){
+                break;
+            }
         }    
     }
     return results
@@ -189,7 +192,7 @@ function getInputMessage(indentCount: number, defaultMessage: string, propertyLa
 }
 
 
-// getIndent(indentCount) + (propertyLabel ? (propertyLabel as string): 'True or false (Boolean value)')
+
 
 async function schemaWalker<
     S extends CompatibleZodTypes,
@@ -197,13 +200,13 @@ async function schemaWalker<
 >(schema: S, propertyLabel?: InputLabelsForSchema<S>, indentCount: number = 0): Promise<T> {
     switch (true) {
         case schema instanceof ZodBoolean:
-            return (await booleanPrompt(getInputMessage(indentCount, 'Boolean'), schema)) as T;
+            return (await booleanPrompt(getInputMessage(indentCount, 'Boolean', propertyLabel as InputLabelObject | string), schema)) as T;
         case schema instanceof ZodString:
-            return (await stringPrompt(getInputMessage(indentCount, 'String'), schema)) as T;
+            return (await stringPrompt(getInputMessage(indentCount, 'String', propertyLabel as InputLabelObject | string), schema)) as T;
         case schema instanceof ZodNumber:
-            return (await numberPrompt(getInputMessage(indentCount, 'Number'), schema)) as T;
+            return (await numberPrompt(getInputMessage(indentCount, 'Number', propertyLabel as InputLabelObject | string), schema)) as T;
         case schema instanceof ZodEnum:
-            return (await enumPrompt('', schema)) as T;
+            return (await enumPrompt(getInputMessage(indentCount, 'Enum', propertyLabel as InputLabelObject | string), schema)) as T;
 
         case schema instanceof ZodObject:
             const object: Partial<T> = {}
@@ -217,7 +220,17 @@ async function schemaWalker<
             }
             console.log(getBrace('}', indentCount));
             return object as T;
-
+        
+        case schema instanceof ZodArray:
+            console.log(getBrace('[', indentCount));
+            const arr = await arrayPrompt(
+                getInputMessage(indentCount + 1, 'Array of values', propertyLabel as InputLabelObject | string, "Press Ctrl+C to Finalize"),
+                schema,
+                indentCount + 1
+            )
+            console.log(getBrace(']', indentCount));
+            return arr as T
+            
         default:
             throw new Error(`Unsupported schema type.`);
     }
