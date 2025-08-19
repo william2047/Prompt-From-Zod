@@ -117,13 +117,14 @@ async function schemaWalker<
     S extends CompatibleZodTypes,
     T = z.infer<S>
 >(schema: S, propertyLabel?: InputLabelsForSchema<S>, indentCount: number = 0): Promise<T> {
-    switch (schema.def.type) {
-        case 'boolean':
-            return (await booleanPrompt(`${'\t'.repeat(indentCount)}Enter a boolean value: ${propertyLabel ? ("\n" + '\t'.repeat(indentCount) + propertyLabel as string) : ''}`, schema)) as T;
-        case 'string':
-            return (await stringPrompt(`${'\t'.repeat(indentCount)}Enter a string value: ${propertyLabel ? ("\n" + '\t'.repeat(indentCount) + propertyLabel as string) : ''}`, schema)) as T;
-        case 'number':
-            return (await numberPrompt(`${'\t'.repeat(indentCount)}Enter a number value: ${propertyLabel ? ("\n" + '\t'.repeat(indentCount) + propertyLabel as string) : ''}`, schema)) as T;
+    switch (true) {
+        case schema instanceof ZodBoolean:
+            return (await booleanPrompt('', schema)) as T;
+        case schema instanceof ZodString:
+            return (await stringPrompt('', schema)) as T;
+        case schema instanceof ZodNumber:
+            return (await numberPrompt('', schema)) as T;
+
         default:
             throw new Error(`Unsupported schema type.`);
     }
