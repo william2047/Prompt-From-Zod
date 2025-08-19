@@ -264,28 +264,3 @@ async function promptsFromZod<
 }
 
 export default promptsFromZod;
-
-
-
-
-const test = z.array(z.number())
-const test2 = z.object({
-    name: z.string(),
-    age: z.number(),
-    hobbies: z.string(),
-    clothes: z.object({
-        shirt: z.string(),
-        pants: z.string(),
-        shoes: z.string()
-    })
-})
-
-promptsFromZod(test2, {
-    name: 'enter your name', age: '1', hobbies: 'enter your hobbies', clothes: {
-        shirt: 'enter your shirt size',
-        pants: 'enter your pants size',
-        shoes: 'enter your shoe size'
-    }
-})
-
-
