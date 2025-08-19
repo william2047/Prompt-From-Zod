@@ -351,11 +351,11 @@ async function schemaWalker<
  *   hobbies: "List your hobbies",
  * };
  * 
- * promptsFromZod(schema, labels).then((result) => {
+ * promptFromZod(schema, labels).then((result) => {
  *   console.log("Collected Data:", result);
  * });
  */
-async function promptsFromZod<
+async function promptFromZod<
     S extends CompatibleZodTypes,
 >(schema: S, propertyLabel?: InputLabelsForSchema<S>, doConfirm: boolean = true): Promise<z.infer<S>> {
     console.log(chalk.red('============================='))
@@ -372,10 +372,10 @@ async function promptsFromZod<
     }
 
     if (restart) {
-        return promptsFromZod(schema, propertyLabel, doConfirm);
+        return promptFromZod(schema, propertyLabel, doConfirm);
     }
 
     return results;
 }
 
-export default promptsFromZod;
+export default promptFromZod;
