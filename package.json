@@ -2,11 +2,22 @@
   "name": "prompt-from-zod",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.ts",
-  "scripts": {},
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "format": "prettier --write .",
+    "prepublishOnly": "npm run build"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/william2047/Prompt-From-Zod.git"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "keywords": [],
   "author": "",
@@ -25,5 +36,11 @@
     "@types/node": "^24.3.0",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "semi": true,
+    "singleQuote": false,
+    "trailingComma": "all"
   }
 }
