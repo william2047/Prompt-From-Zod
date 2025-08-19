@@ -187,6 +187,7 @@ async function promptsFromZod<
     S extends CompatibleZodTypes,
     T = z.infer<S>
 >(schema: S, propertyLabel?: InputLabelsForSchema<S>): Promise<T> {
+    console.log(chalk.red('============================='))
 
     return await schemaWalker(schema, propertyLabel)
 }
