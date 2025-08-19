@@ -20,5 +20,10 @@
     "@inquirer/prompts": "^7.8.3",
     "chalk": "^5.6.0",
     "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
   }
 }
