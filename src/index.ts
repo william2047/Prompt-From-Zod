@@ -29,15 +29,20 @@ type InputPrompt<
 
 
 
+type InputLabelObject = { value: string, overiteDefault?: boolean }
+type InputLabel = string | InputLabelObject;
+
+
 type InputLabelsForSchema<S extends CompatibleZodTypes> =
     S extends ZodObject<infer Shape>
     ? {
         [K in keyof Shape]:
         Shape[K] extends ZodObject<any>
         ? InputLabelsForSchema<Shape[K]> // recurse for nested objects
-        : string;                        // otherwise just a label string
+        : InputLabel;                        // otherwise just a label string
     }
-    : string;
+    : InputLabel;
+
 
 
 function zodParseToValidate<
@@ -110,6 +115,26 @@ function getBrace(braceChar: string, indentCount: number) {
 function getIndent(indentCount: number) {
     return (indent).repeat(indentCount);
 }
+function getInputMessage(indentCount: number, defaultMessage: string, propertyLabel?: InputLabel) {
+    let message = '';
+
+    if(typeof propertyLabel === 'string') {
+        message = propertyLabel;
+    }
+    else if(propertyLabel){
+        if(propertyLabel.overiteDefault){
+            message = propertyLabel.value.trim().replace(/[:;\s]+$/, '');
+        }
+        else{
+            message = `${propertyLabel.value} (${defaultMessage})`;
+        }
+    }
+    else{
+        message = defaultMessage;
+    }
+    return (getIndent(indentCount) + message + ": ")
+}
+
 
 // getIndent(indentCount) + (propertyLabel ? (propertyLabel as string): 'True or false (Boolean value)')
 
@@ -119,11 +144,11 @@ async function schemaWalker<
 >(schema: S, propertyLabel?: InputLabelsForSchema<S>, indentCount: number = 0): Promise<T> {
     switch (true) {
         case schema instanceof ZodBoolean:
-            return (await booleanPrompt('', schema)) as T;
+            return (await booleanPrompt(getInputMessage(indentCount, 'Boolean'), schema)) as T;
         case schema instanceof ZodString:
-            return (await stringPrompt('', schema)) as T;
+            return (await stringPrompt(getInputMessage(indentCount, 'String'), schema)) as T;
         case schema instanceof ZodNumber:
-            return (await numberPrompt('', schema)) as T;
+            return (await numberPrompt(getInputMessage(indentCount, 'Number'), schema)) as T;
         case schema instanceof ZodObject:
             const object: Partial<T> = {}
             console.log(getBrace('{', indentCount));
