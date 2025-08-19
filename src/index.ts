@@ -23,7 +23,7 @@ type InputLabelsForSchema<S extends CompatibleZodTypes> =
         ? InputLabelsForSchema<Shape[K]> // recurse for nested objects
         : string;                        // otherwise just a label string
     }
-    : never;
+    : string;
 
 
 function zodParseToValidate<
