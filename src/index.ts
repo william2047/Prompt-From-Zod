@@ -1,5 +1,5 @@
-import z, { core, ZodAny, infer, ZodBoolean, ZodNumber, ZodObject, ZodString, ZodType, ZodArray, ZodEnum } from "zod";
-import { checkbox, confirm, input, select, number, editor } from "@inquirer/prompts";
+import z, { core, ZodBoolean, ZodNumber, ZodObject, ZodString, ZodArray, ZodEnum } from "zod";
+import { confirm, input, select, number, editor } from "@inquirer/prompts";
 import chalk from "chalk";
 
 
