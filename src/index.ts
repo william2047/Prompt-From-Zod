@@ -90,6 +90,18 @@ const numberPrompt: InputPrompt<ZodNumber> = async (message, schema) => {
 
 
 
+
+const indent = '   ';
+
+function getBrace(braceChar : string, indentCount: number) {
+    return '  ' + (indent).repeat(indentCount) + braceChar;
+}
+function getIndent(indentCount: number){
+    return (indent).repeat(indentCount);
+}
+
+// getIndent(indentCount) + (propertyLabel ? (propertyLabel as string): 'True or false (Boolean value)')
+
 async function schemaWalker<
     S extends CompatibleZodTypes,
     T = z.infer<S>
