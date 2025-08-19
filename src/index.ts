@@ -171,22 +171,24 @@ function getBrace(braceChar: string, indentCount: number) {
 function getIndent(indentCount: number) {
     return (indent).repeat(indentCount);
 }
-function getInputMessage(indentCount: number, defaultMessage: string, propertyLabel?: InputLabel) {
+function getInputMessage(indentCount: number, defaultMessage: string, propertyLabel?: InputLabel, mandatoryMessage?: string) {
     let message = '';
+    defaultMessage = defaultMessage.trim().replace(/[:;\s]+$/, '');
+    message += mandatoryMessage ? mandatoryMessage.trim().replace(/[:;\s]+$/, '') + ' | ' : '';
 
     if(typeof propertyLabel === 'string') {
-        message = propertyLabel;
+        message += propertyLabel.replace(/[:;\s]+$/, '');
     }
     else if(propertyLabel){
         if(propertyLabel.overiteDefault){
-            message = propertyLabel.value.trim().replace(/[:;\s]+$/, '');
+            message += propertyLabel.value.trim().replace(/[:;\s]+$/, '');
         }
         else{
-            message = `${propertyLabel.value} (${defaultMessage})`;
+            message += `${propertyLabel.value} (${defaultMessage})`;
         }
     }
     else{
-        message = defaultMessage;
+        message += defaultMessage;
     }
     return (getIndent(indentCount) + message + ": ")
 }
