@@ -27,19 +27,16 @@ type CompatibleZodTypes<D extends N = 5> =
     | (D extends 0 ? never : CompatibleZodObject<D>);
 
 
-
 // Define a type for the primary input prompt function
 type InputPimaryPrompt<
     S extends CompatibleZodTypes
 > = (message: string, schema: S, abortController?: AbortController) => Promise<z.infer<S>>
 
 
-
-
-
 // Foundational types for input labels
 type InputLabelObject = { value: string, overiteDefault?: boolean }
 type InputLabel = string | InputLabelObject;
+
 
 
 /**
@@ -103,6 +100,7 @@ const booleanPrompt: InputPimaryPrompt<ZodBoolean> = async (message, schema, abo
     }, {signal: abortController?.signal})
 }
 
+
 const stringPrompt: InputPimaryPrompt<ZodString> = async (message, schema, abortController?): Promise<string> => {
     // Normalizes the type to lowercase for comparison
     const metaType = (typeof schema.meta()?.type === 'string') ? ((schema.meta() as { type: string }).type as string).toLowerCase() : undefined;
@@ -139,6 +137,7 @@ const numberPrompt: InputPimaryPrompt<ZodNumber> = async (message, schema, abort
     }, { signal: abortController?.signal });
 }
 
+
 const enumPrompt: InputPimaryPrompt<ZodEnum> = async (message, schema, abortController?): Promise<z.infer<typeof schema>> => {
     return await select({
         choices: schema.options.map(option => ({
@@ -148,7 +147,6 @@ const enumPrompt: InputPimaryPrompt<ZodEnum> = async (message, schema, abortCont
         message,
     }, { signal: abortController?.signal });
 }
-
 
 
 
@@ -198,10 +196,6 @@ async function arrayPrompt<
 
 
 
-
-
-
-
 /**
  * Generates a string representing a brace character with a specified indentation.
  *
@@ -223,6 +217,7 @@ function getBrace(braceChar: string, indentCount: number) {
 function getIndent(indentCount: number) {
     return (indent).repeat(indentCount);
 }
+
 
 /**
  * Constructs an input message string with optional indentation, default message, 
@@ -307,6 +302,7 @@ async function schemaWalker<
             throw new Error(`Unsupported schema type.`);
     }
 }
+
 
 
 
