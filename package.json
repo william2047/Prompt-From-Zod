@@ -1,7 +1,7 @@
 {
   "name": "prompt-from-zod",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.0-beta.1",
+  "description": "A utility to generate interactive prompts based on Zod schemas, supporting nested structures and validation.",
   "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -29,7 +29,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/william2047/Prompt-From-Zod/issues"
