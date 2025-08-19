@@ -160,6 +160,9 @@ async function schemaWalker<
             return (await stringPrompt(getInputMessage(indentCount, 'String'), schema)) as T;
         case schema instanceof ZodNumber:
             return (await numberPrompt(getInputMessage(indentCount, 'Number'), schema)) as T;
+        case schema instanceof ZodEnum:
+            return (await enumPrompt('', schema)) as T;
+
         case schema instanceof ZodObject:
             const object: Partial<T> = {}
             console.log(getBrace('{', indentCount));
