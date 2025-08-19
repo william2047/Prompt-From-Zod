@@ -1,17 +1,14 @@
-import z, { ZodAny, ZodObject, ZodType } from "zod";
+import z, { core, ZodAny, infer, ZodBoolean, ZodNumber, ZodObject, ZodString, ZodType } from "zod";
 import { checkbox, confirm, input, select, number, editor } from "@inquirer/prompts";
 
-type CompatibleZodPrimaryTypes = 
-    z.ZodBoolean |
-    z.ZodString |
-    z.ZodNumber;
+type CompatibleZodPrimaryTypes =
+    ZodBoolean |
+    ZodString |
+    ZodNumber;
 
-type CompatibaleZodObject = z.ZodObject<Record<string, CompatibleZodPrimaryTypes | z.ZodArray<CompatibleZodPrimaryTypes>>>
-
-type CompatibleZodTypes = 
+type CompatibleZodTypes =
     CompatibleZodPrimaryTypes |
-    z.ZodArray<CompatibleZodPrimaryTypes> |
-    CompatibaleZodObject;
+    ZodObject<Record<string, CompatibleZodPrimaryTypes | ZodObject>, core.$strip>
 
 
 type InputPrompt<T> = (message: string, schema: CompatibleZodTypes) => Promise<T>
@@ -20,10 +17,10 @@ type InputPrompt<T> = (message: string, schema: CompatibleZodTypes) => Promise<T
 function zodParseToValidate<
     S extends CompatibleZodTypes,
     T extends z.infer<S>
->(schema: CompatibleZodTypes) : (value: T) => Promise<boolean | string> {
-    return async function(value: T){
+>(schema: CompatibleZodTypes): (value: T) => Promise<boolean | string> {
+    return async function (value: T) {
         const parsedValue = schema.safeParse(value);
-        if(parsedValue.success) {
+        if (parsedValue.success) {
             return true
         }
         else {
@@ -33,14 +30,14 @@ function zodParseToValidate<
 }
 
 
-type InputLabelsForSchema<S extends CompatibaleZodObject> =
-  S extends ZodObject<infer Shape>
+type InputLabelsForSchema<S extends CompatibleZodTypes> =
+    S extends ZodObject<infer Shape>
     ? {
         [K in keyof Shape]:
-          Shape[K] extends ZodObject<any>
-            ? InputLabelsForSchema<Shape[K]> // recurse for nested objects
-            : string;                        // otherwise just a label string
-      }
+        Shape[K] extends ZodObject<any>
+        ? InputLabelsForSchema<Shape[K]> // recurse for nested objects
+        : string;                        // otherwise just a label string
+    }
     : never;
 
 
@@ -52,23 +49,23 @@ const booleanPrompt: InputPrompt<boolean> = async (message) => {
 
 const stringPrompt: InputPrompt<string> = async (message, schema) => {
     // Normalizes the type to lowercase for comparison
-    const metaType = (typeof schema.meta()?.type === 'string') ? ((schema.meta() as {type: string}).type as string).toLowerCase() : undefined;
-    if(
+    const metaType = (typeof schema.meta()?.type === 'string') ? ((schema.meta() as { type: string }).type as string).toLowerCase() : undefined;
+    if (
         metaType && (
-        metaType === 'longtext' ||
-        metaType === 'textarea' ||
-        metaType === 'markdown' ||
-        metaType === 'richtext' || 
-        metaType === 'long' ||
-        metaType === 'big' || 
-        metaType === 'bigtext'
-    )) {
+            metaType === 'longtext' ||
+            metaType === 'textarea' ||
+            metaType === 'markdown' ||
+            metaType === 'richtext' ||
+            metaType === 'long' ||
+            metaType === 'big' ||
+            metaType === 'bigtext'
+        )) {
         return await editor({
             message,
             validate: zodParseToValidate(schema),
         })
     }
-    else{
+    else {
         return await input({
             message,
             required: true,
@@ -87,7 +84,6 @@ const numberPrompt: InputPrompt<number> = async (message, schema) => {
 
 
 
-    
 async function schemaWalker<
     S extends CompatibleZodTypes,
     T = z.infer<S>
@@ -99,7 +95,6 @@ async function schemaWalker<
             return (await stringPrompt("Enter a string value:", schema)) as T;
         case 'number':
             return (await numberPrompt("Enter a number value:", schema)) as T;
-        case ''
         default:
             throw new Error(`Unsupported schema type.`);
     }
@@ -107,17 +102,14 @@ async function schemaWalker<
 
 
 
-
-
-
-
 async function promptsFromZod<
-    S extends ZodType,
+    S extends CompatibleZodTypes,
     T = z.infer<S>
->(schema: S, propertyLabels?: InputLabelsForSchema<S> ): Promise<T> {
+>(schema: S, propertyLabels?: InputLabelsForSchema<S>): Promise<T> {
 
-    if(schema.def.type === 'object' && propertyLabels !== undefined) throw new Error('Property labels can only be used with ZodObject schemas');
-    
+
+    if (schema.def.type === 'object' && propertyLabels !== undefined) throw new Error('Property labels can only be used with ZodObject schemas');
+
 }
 
 export default promptsFromZod;
@@ -129,7 +121,7 @@ const test = z.array(z.number())
 const test2 = z.object({
     name: z.string(),
     age: z.number(),
-    hobbies: z.array(z.string()),
+    hobbies: z.string(),
     clothes: z.object({
         shirt: z.string(),
         pants: z.string(),
@@ -137,10 +129,12 @@ const test2 = z.object({
     })
 })
 
-promptsFromZod(test2, {name: 'enter your name', age: 'enter your age', hobbies: 'enter your hobbies', clothes: {
-    shirt: 'enter your shirt size',
-    pants: 'enter your pants size',
-    shoes: 'enter your shoe size'
-}})
+promptsFromZod(test2, {
+    name: 'enter your name', age: '1', hobbies: 'enter your hobbies', clothes: {
+        shirt: 'enter your shirt size',
+        pants: 'enter your pants size',
+        shoes: 'enter your shoe size'
+    }
+})
 
 
