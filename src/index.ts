@@ -14,6 +14,18 @@ type CompatibleZodTypes =
 type InputPrompt<T> = (message: string, schema: CompatibleZodTypes) => Promise<T>
 
 
+
+type InputLabelsForSchema<S extends CompatibleZodTypes> =
+    S extends ZodObject<infer Shape>
+    ? {
+        [K in keyof Shape]:
+        Shape[K] extends ZodObject<any>
+        ? InputLabelsForSchema<Shape[K]> // recurse for nested objects
+        : string;                        // otherwise just a label string
+    }
+    : never;
+
+
 function zodParseToValidate<
     S extends CompatibleZodTypes,
     T extends z.infer<S>
@@ -29,16 +41,6 @@ function zodParseToValidate<
     }
 }
 
-
-type InputLabelsForSchema<S extends CompatibleZodTypes> =
-    S extends ZodObject<infer Shape>
-    ? {
-        [K in keyof Shape]:
-        Shape[K] extends ZodObject<any>
-        ? InputLabelsForSchema<Shape[K]> // recurse for nested objects
-        : string;                        // otherwise just a label string
-    }
-    : never;
 
 
 const booleanPrompt: InputPrompt<boolean> = async (message) => {
