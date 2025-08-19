@@ -1,7 +1,8 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "module": "ESNext", // ESM output
+        "module": "nodenext", // ESM output
+        "moduleResolution": "nodenext", // Ensure compatibility with Node.js ESM
         "outDir": "./dist/esm" // Output directory for ESM build
     }
 }
