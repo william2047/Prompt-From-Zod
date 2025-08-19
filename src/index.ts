@@ -124,6 +124,18 @@ async function schemaWalker<
             return (await stringPrompt('', schema)) as T;
         case schema instanceof ZodNumber:
             return (await numberPrompt('', schema)) as T;
+        case schema instanceof ZodObject:
+            const object: Partial<T> = {}
+            console.log(getBrace('{', indentCount));
+            for (const key in schema.shape) {
+                object[key as keyof T] = await schemaWalker(
+                    schema.shape[key],
+                    propertyLabel ? (propertyLabel as InputLabelsForSchema<CompatibleZodObject>)[key] : undefined,
+                    indentCount + 1
+                )
+            }
+            console.log(getBrace('}', indentCount));
+            return object as T;
 
         default:
             throw new Error(`Unsupported schema type.`);
