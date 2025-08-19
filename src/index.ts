@@ -104,6 +104,17 @@ const numberPrompt: InputPrompt<ZodNumber> = async (message, schema) => {
     })
 }
 
+const enumPrompt: InputPrompt<ZodEnum> = async (message, schema) => {
+    return await select({
+        choices: schema.options.map(option => ({
+            name: option as string,
+            value: option as string,
+        })),
+        message,
+    })
+}
+
+
 
 
 
