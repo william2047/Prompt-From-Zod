@@ -1,11 +1,11 @@
-import z, { core, ZodAny, infer, ZodBoolean, ZodNumber, ZodObject, ZodString, ZodType } from "zod";
+import z, { core, ZodAny, infer, ZodBoolean, ZodNumber, ZodObject, ZodString, ZodType, ZodArray, ZodEnum } from "zod";
 import { checkbox, confirm, input, select, number, editor } from "@inquirer/prompts";
 import chalk from "chalk";
 
 
 // numeric literals for a small depth budget
 type N = 0 | 1 | 2 | 3 | 4 | 5;
-type Prev = { 0:0, 1:0, 2:1, 3:2, 4:3, 5:4 };
+type Prev = { 0: 0, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 };
 type Dec<D extends N> = Prev[D];
 
 type CompatibleZodPrimary = ZodBoolean | ZodString | ZodNumber | ZodEnum;
@@ -13,12 +13,12 @@ type CompatibleZodPrimary = ZodBoolean | ZodString | ZodNumber | ZodEnum;
 type CompatibleZodArray = ZodArray<CompatibleZodPrimary>;
 
 type CompatibleZodTypes<D extends N = 5> =
-  | CompatibleZodPrimary
-  | CompatibleZodArray
-  | (D extends 0 ? never : CompatibleZodObject<D>);
+    | CompatibleZodPrimary
+    | CompatibleZodArray
+    | (D extends 0 ? never : CompatibleZodObject<D>);
 
 type CompatibleZodObject<D extends N = 5> =
-  ZodObject<Record<string, CompatibleZodTypes<Dec<D>>>, core.$strip>;
+    ZodObject<Record<string, CompatibleZodTypes<Dec<D>>>, core.$strip>;
 
 
 
@@ -104,10 +104,10 @@ const numberPrompt: InputPrompt<ZodNumber> = async (message, schema) => {
 
 const indent = '   ';
 
-function getBrace(braceChar : string, indentCount: number) {
+function getBrace(braceChar: string, indentCount: number) {
     return '  ' + (indent).repeat(indentCount) + braceChar;
 }
-function getIndent(indentCount: number){
+function getIndent(indentCount: number) {
     return (indent).repeat(indentCount);
 }
 
