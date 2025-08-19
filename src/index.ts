@@ -1,14 +1,24 @@
 import z, { core, ZodAny, infer, ZodBoolean, ZodNumber, ZodObject, ZodString, ZodType } from "zod";
 import { checkbox, confirm, input, select, number, editor } from "@inquirer/prompts";
 
-type CompatibleZodPrimaryTypes =
-    ZodBoolean |
-    ZodString |
-    ZodNumber;
 
-type CompatibleZodTypes =
-    CompatibleZodPrimaryTypes |
-    ZodObject<Record<string, CompatibleZodPrimaryTypes | ZodObject>, core.$strip>
+// numeric literals for a small depth budget
+type N = 0 | 1 | 2 | 3 | 4 | 5;
+type Prev = { 0:0, 1:0, 2:1, 3:2, 4:3, 5:4 };
+type Dec<D extends N> = Prev[D];
+
+type CompatibleZodPrimary = ZodBoolean | ZodString | ZodNumber | ZodEnum;
+
+type CompatibleZodArray = ZodArray<CompatibleZodPrimary>;
+
+type CompatibleZodTypes<D extends N = 5> =
+  | CompatibleZodPrimary
+  | CompatibleZodArray
+  | (D extends 0 ? never : CompatibleZodObject<D>);
+
+type CompatibleZodObject<D extends N = 5> =
+  ZodObject<Record<string, CompatibleZodTypes<Dec<D>>>, core.$strip>;
+
 
 
 type InputPrompt<
