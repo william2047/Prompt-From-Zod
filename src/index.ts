@@ -22,10 +22,12 @@ type CompatibleZodObject<D extends N = 5> =
 
 
 
-type InputPrompt<
+    
+type InputPimaryPrompt<
     S extends CompatibleZodTypes,
     T = z.infer<S>
-> = (message: string, schema: S) => Promise<T>
+> = (message: string, schema: S, abortController?: AbortController) => Promise<T>
+
 
 
 
@@ -62,13 +64,13 @@ function zodParseToValidate<
 
 
 
-const booleanPrompt: InputPrompt<ZodBoolean> = async (message) => {
+const booleanPrompt: InputPimaryPrompt<ZodBoolean> = async (message, schema, abortController?) => {
     return await confirm({
         message,
-    })
+    }, {signal: abortController?.signal})
 }
 
-const stringPrompt: InputPrompt<ZodString> = async (message, schema) => {
+const stringPrompt: InputPimaryPrompt<ZodString> = async (message, schema, abortController?) => {
     // Normalizes the type to lowercase for comparison
     const metaType = (typeof schema.meta()?.type === 'string') ? ((schema.meta() as { type: string }).type as string).toLowerCase() : undefined;
     if (
@@ -84,34 +86,74 @@ const stringPrompt: InputPrompt<ZodString> = async (message, schema) => {
         return await editor({
             message,
             validate: zodParseToValidate(schema),
-        })
+        }, { signal: abortController?.signal });
     }
     else {
         return await input({
             message,
             required: true,
             validate: zodParseToValidate(schema),
-        })
+        }, { signal: abortController?.signal });
     }
 }
 
 
-const numberPrompt: InputPrompt<ZodNumber> = async (message, schema) => {
+const numberPrompt: InputPimaryPrompt<ZodNumber> = async (message, schema, abortController?) => {
     return await number({
         message,
         required: true,
         validate: zodParseToValidate(schema),
-    })
+    }, { signal: abortController?.signal });
 }
 
-const enumPrompt: InputPrompt<ZodEnum> = async (message, schema) => {
+const enumPrompt: InputPimaryPrompt<ZodEnum> = async (message, schema, abortController?) => {
     return await select({
         choices: schema.options.map(option => ({
             name: option as string,
             value: option as string,
         })),
         message,
-    })
+    }, { signal: abortController?.signal });
+}
+
+
+async function arrayPrompt<
+    S extends CompatibleZodArray
+>(message: string, schema: S): Promise<z.infer<S>> {
+    
+    let prompt: InputPimaryPrompt<CompatibleZodPrimary>;
+    switch (true) {
+        case schema.element instanceof ZodBoolean:
+            prompt = booleanPrompt as InputPimaryPrompt<CompatibleZodPrimary>;
+            break;
+        case schema.element instanceof ZodString:
+            prompt = stringPrompt as InputPimaryPrompt<CompatibleZodPrimary>;
+            break;
+        case schema.element instanceof ZodNumber:
+            prompt = numberPrompt as InputPimaryPrompt<CompatibleZodPrimary>;
+            break;
+        case schema.element instanceof ZodEnum:
+            prompt = enumPrompt as InputPimaryPrompt<CompatibleZodPrimary>;
+            break;
+        default:
+            throw new Error(`Unsupported array element type.`);
+    }
+
+
+    console.log(message);
+    const results = [];
+
+    while(true){
+        const controller = new AbortController();
+        try{
+            const result = await prompt('', schema.element, { signal: controller.signal });
+            results.push(result);
+        }
+        catch(){
+
+        }    
+    }
+    return results
 }
 
 
