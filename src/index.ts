@@ -366,9 +366,9 @@ async function promptFromZod<
 
     let restart = false;
     if (doConfirm) {
-        restart = await confirm({
+        restart = !(await confirm({
             message: chalk.green('Are you sure you want to submit the data? (no to restart)'),
-        })
+        }))
     }
 
     if (restart) {
