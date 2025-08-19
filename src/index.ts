@@ -11,7 +11,10 @@ type CompatibleZodTypes =
     ZodObject<Record<string, CompatibleZodPrimaryTypes | ZodObject>, core.$strip>
 
 
-type InputPrompt<T> = (message: string, schema: CompatibleZodTypes) => Promise<T>
+type InputPrompt<
+    S extends CompatibleZodTypes,
+    T = z.infer<S>
+> = (message: string, schema: S) => Promise<T>
 
 
 
@@ -43,13 +46,13 @@ function zodParseToValidate<
 
 
 
-const booleanPrompt: InputPrompt<boolean> = async (message) => {
+const booleanPrompt: InputPrompt<ZodBoolean> = async (message) => {
     return await confirm({
         message,
     })
 }
 
-const stringPrompt: InputPrompt<string> = async (message, schema) => {
+const stringPrompt: InputPrompt<ZodString> = async (message, schema) => {
     // Normalizes the type to lowercase for comparison
     const metaType = (typeof schema.meta()?.type === 'string') ? ((schema.meta() as { type: string }).type as string).toLowerCase() : undefined;
     if (
@@ -76,7 +79,8 @@ const stringPrompt: InputPrompt<string> = async (message, schema) => {
     }
 }
 
-const numberPrompt: InputPrompt<number> = async (message, schema) => {
+
+const numberPrompt: InputPrompt<ZodNumber> = async (message, schema) => {
     return await number({
         message,
         required: true,
