@@ -149,9 +149,7 @@ async function promptsFromZod<
     T = z.infer<S>
 >(schema: S, propertyLabel?: InputLabelsForSchema<S>): Promise<T> {
 
-
-    if (schema.def.type === 'object' && propertyLabel !== undefined) throw new Error('Property labels can only be used with ZodObject schemas');
-
+    return await schemaWalker(schema, propertyLabel)
 }
 
 export default promptsFromZod;
