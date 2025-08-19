@@ -1,5 +1,6 @@
 import z, { core, ZodAny, infer, ZodBoolean, ZodNumber, ZodObject, ZodString, ZodType } from "zod";
 import { checkbox, confirm, input, select, number, editor } from "@inquirer/prompts";
+import chalk from "chalk";
 
 
 // numeric literals for a small depth budget
