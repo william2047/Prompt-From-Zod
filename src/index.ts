@@ -242,14 +242,25 @@ async function schemaWalker<
 
 async function promptsFromZod<
     S extends CompatibleZodTypes,
-    T = z.infer<S>
->(schema: S, propertyLabel?: InputLabelsForSchema<S>): Promise<T> {
+>(schema: S, propertyLabel?: InputLabelsForSchema<S>, doConfirm:boolean = true): Promise<z.infer<S>> {
     console.log(chalk.red('============================='))
 
-    return await schemaWalker(schema, propertyLabel)
+    const results = await schemaWalker(schema, propertyLabel)
 
     console.log(chalk.red('============================='))
 
+    let restart = false;
+    if(doConfirm){
+        restart = await confirm({
+            message: chalk.green('Are you sure you want to submit the data? (no to restart)'),
+        })
+    }
+
+    if(restart){
+        return promptsFromZod(schema, propertyLabel, doConfirm);
+    }    
+
+    return results;
 }
 
 export default promptsFromZod;
