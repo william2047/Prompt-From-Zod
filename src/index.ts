@@ -379,3 +379,11 @@ async function promptFromZod<
 }
 
 export default promptFromZod;
+
+
+
+// Ensure compatibility with CommonJS
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports = promptFromZod;
+    module.exports.default = promptFromZod;
+}

@@ -2,14 +2,22 @@
   "name": "prompt-from-zod",
   "version": "1.0.0",
   "description": "",
+  "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
-  "main": "./dist/index.js",
+  "main": "./dist/cjs/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "format": "prettier --write .",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
     "prepublishOnly": "npm run build"
   },
   "repository": {
