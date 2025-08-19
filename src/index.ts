@@ -89,14 +89,14 @@ const numberPrompt: InputPrompt<number> = async (message, schema) => {
 async function schemaWalker<
     S extends CompatibleZodTypes,
     T = z.infer<S>
->(schema: S): Promise<T> {
+>(schema: S, propertyLabel?: InputLabelsForSchema<S>, indentCount: number = 0): Promise<T> {
     switch (schema.def.type) {
         case 'boolean':
-            return (await booleanPrompt("Enter a boolean value:", schema)) as T;
+            return (await booleanPrompt(`${'\t'.repeat(indentCount)}Enter a boolean value: ${propertyLabel ? ("\n" + '\t'.repeat(indentCount) + propertyLabel as string) : ''}`, schema)) as T;
         case 'string':
-            return (await stringPrompt("Enter a string value:", schema)) as T;
+            return (await stringPrompt(`${'\t'.repeat(indentCount)}Enter a string value: ${propertyLabel ? ("\n" + '\t'.repeat(indentCount) + propertyLabel as string) : ''}`, schema)) as T;
         case 'number':
-            return (await numberPrompt("Enter a number value:", schema)) as T;
+            return (await numberPrompt(`${'\t'.repeat(indentCount)}Enter a number value: ${propertyLabel ? ("\n" + '\t'.repeat(indentCount) + propertyLabel as string) : ''}`, schema)) as T;
         default:
             throw new Error(`Unsupported schema type.`);
     }
