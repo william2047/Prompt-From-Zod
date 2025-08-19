@@ -247,6 +247,9 @@ async function promptsFromZod<
     console.log(chalk.red('============================='))
 
     return await schemaWalker(schema, propertyLabel)
+
+    console.log(chalk.red('============================='))
+
 }
 
 export default promptsFromZod;
