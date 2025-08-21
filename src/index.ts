@@ -12,16 +12,16 @@ type Prev = { 0: 0, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 };
 type Dec<D extends N> = Prev[D];
 
 // Define compatible Zod types for the schema
-type CompatibleZodPrimary = ZodBoolean | ZodString | ZodNumber | ZodEnum;
+export type CompatibleZodPrimary = ZodBoolean | ZodString | ZodNumber | ZodEnum;
 
 // Define compatible Zod array type
-type CompatibleZodArray = ZodArray<CompatibleZodPrimary>;
+export type CompatibleZodArray = ZodArray<CompatibleZodPrimary>;
 
-type CompatibleZodObject<D extends N = 5> =
+export type CompatibleZodObject<D extends N = 5> =
     ZodObject<Record<string, CompatibleZodTypes<Dec<D>>>, core.$strip>;
 
 // Define compatible Zod object type with a depth parameter
-type CompatibleZodTypes<D extends N = 5> =
+export type CompatibleZodTypes<D extends N = 5> =
     | CompatibleZodPrimary
     | CompatibleZodArray
     | (D extends 0 ? never : CompatibleZodObject<D>);
