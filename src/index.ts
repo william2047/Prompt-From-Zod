@@ -34,37 +34,19 @@ type InputPimaryPrompt<
 
 
 // Foundational types for input labels
-type InputLabelObject = { value: string, overiteDefault?: boolean }
-type InputLabel = string | InputLabelObject;
+type InputLabelFull = { value: string, overwriteDefault?: boolean }
+type InputLabelObject<S extends CompatibleZodObject> ={
+    value: string,
+    items:{
+        [K in keyof S['shape']]: InputLabel<S['shape'][K]>
+    }
+}
+type InputLabel<S extends CompatibleZodTypes> =
+    S extends ZodObject<any>
+        ? InputLabelObject<S>
+        : InputLabelFull | string
 
 
-
-/**
- * A utility type that generates a structure of input labels for a given Zod schema.
- * 
- * This type recursively traverses a Zod schema and maps its shape to a corresponding
- * structure of input labels. For nested Zod objects, it recurses into their shape
- * and generates nested input label structures. For other types, it assigns a single
- * input label.
- * 
- * @template S - A Zod schema type that extends `CompatibleZodTypes`.
- * 
- * @typeParam S - The Zod schema type to generate input labels for.
- * 
- * @returns A mapped structure where:
- * - For Zod objects, it produces an object with keys corresponding to the schema's shape
- *   and values being either nested input label structures or a single input label.
- * - For other types, it directly assigns a single input label.
- */
-type InputLabelsForSchema<S extends CompatibleZodTypes> =
-    S extends ZodObject<infer Shape>
-        ? {
-            [K in keyof Shape]:
-            Shape[K] extends ZodObject<any>
-                ? {value: string, items: InputLabelsForSchema<Shape[K]>} | InputLabelsForSchema<Shape[K]> // recurse for nested objects
-                : InputLabel;                        // otherwise just a label string
-        }
-        : InputLabel;
 
 
 
@@ -228,12 +210,12 @@ function getIndent(indentCount: number) {
  * @param propertyLabel - An optional label for the property. If a string is provided, 
  * it will be used directly. If an object is provided, its `value` property will be 
  * used, and it may optionally override the default message based on the 
- * `overiteDefault` flag.
+ * `overwriteDefault` flag.
  * @param mandatoryMessage - An optional mandatory message to prepend to the input 
  * message, separated by a pipe (`|`).
  * @returns The constructed input message string with the specified formatting.
  */
-function getInputMessage(indentCount: number, defaultMessage: string, propertyLabel?: InputLabel, mandatoryMessage?: string) {
+function getInputMessage(indentCount: number, defaultMessage: string, propertyLabel?: InputLabelFull | string, mandatoryMessage?: string) {
     let message = '';
     defaultMessage = defaultMessage.trim().replace(/[:;\s]+$/, '');
     message += mandatoryMessage ? mandatoryMessage.trim().replace(/[:;\s]+$/, '') + ' | ' : '';
@@ -242,7 +224,7 @@ function getInputMessage(indentCount: number, defaultMessage: string, propertyLa
         message += propertyLabel.replace(/[:;\s]+$/, '');
     }
     else if (propertyLabel) {
-        if (propertyLabel.overiteDefault) {
+        if (propertyLabel.overwriteDefault) {
             message += propertyLabel.value.trim().replace(/[:;\s]+$/, '');
         }
         else {
@@ -258,60 +240,81 @@ function getInputMessage(indentCount: number, defaultMessage: string, propertyLa
 
 
 // Recursively walks through the Zod schema and prompts for input based on the schema type.
-async function schemaWalker<
-    S extends CompatibleZodTypes,
-    T = z.infer<S>
->(schema: S, propertyLabel?: InputLabelsForSchema<S>, indentCount: number = 0): Promise<T> {
-    // Case by case, handle the schema type
-    switch (true) {
-        case schema instanceof ZodBoolean:
-            return (await booleanPrompt(getInputMessage(indentCount, 'Boolean', propertyLabel as InputLabelObject | string), schema)) as T;
-        case schema instanceof ZodString:
-            return (await stringPrompt(getInputMessage(indentCount, 'String', propertyLabel as InputLabelObject | string), schema)) as T;
-        case schema instanceof ZodNumber:
-            return (await numberPrompt(getInputMessage(indentCount, 'Number', propertyLabel as InputLabelObject | string), schema)) as T;
-        case schema instanceof ZodEnum:
-            return (await enumPrompt(getInputMessage(indentCount, 'Enum', propertyLabel as InputLabelObject | string), schema)) as T;
-
-        // For objects, recursively walk through the shape
-        case schema instanceof ZodObject:
-            const object: Partial<T> = {}
-            console.log(getBrace('{', indentCount));
-            for (const key in schema.shape) {
-                object[key as keyof T] = await schemaWalker(
-                    schema.shape[key],
-                    propertyLabel ? (propertyLabel as InputLabelsForSchema<CompatibleZodObject>)[key] : undefined,
-                    indentCount + 1
-                )
-            }
-            console.log(getBrace('}', indentCount));
-            return object as T;
-
-        // For arrays, use the arrayPrompt function
-        case schema instanceof ZodArray:
-            console.log(getBrace('[', indentCount));
-            const arr = await arrayPrompt(
-                getInputMessage(indentCount + 1, 'Array of values', propertyLabel as InputLabelObject | string, "Press Ctrl+C to Finalize"),
-                schema,
-                indentCount + 1
-            )
-            console.log(getBrace(']', indentCount));
-            return arr as T
-
-        default:
-            throw new Error(`Unsupported schema type.`);
+async function schemaWalker<S extends CompatibleZodTypes, T = z.infer<S>>(
+    schema: S,
+    propertyLabel?: InputLabel<S>,
+    indentCount: number = 0
+): Promise<T> {
+    if (schema instanceof ZodBoolean) {
+        return await booleanPrompt(getInputMessage(indentCount, 'Boolean', propertyLabel), schema) as T;
     }
+
+    if (schema instanceof ZodString) {
+        return await stringPrompt(getInputMessage(indentCount, 'String', propertyLabel), schema) as T;
+    }
+
+    if (schema instanceof ZodNumber) {
+        return await numberPrompt(getInputMessage(indentCount, 'Number', propertyLabel), schema) as T;
+    }
+
+    if (schema instanceof ZodEnum) {
+        return await enumPrompt(getInputMessage(indentCount, 'Enum', propertyLabel), schema) as T;
+    }
+
+    if (schema instanceof ZodObject) {
+        const object: Partial<T> = {};
+
+        console.log(
+            getBrace(
+                '{ ' + getInputMessage(
+                    0,
+                    'Object',
+                    propertyLabel ? (propertyLabel as InputLabel<CompatibleZodObject>).value : undefined
+                ),
+                indentCount
+            )
+        );
+
+        for (const key in schema.shape) {
+            object[key as keyof T] = await schemaWalker(
+                schema.shape[key],
+                propertyLabel ? (propertyLabel as InputLabel<CompatibleZodObject>).items[key] : undefined,
+                indentCount + 1
+            );
+        }
+
+        console.log(getBrace('}', indentCount));
+        return object as T;
+    }
+
+    if (schema instanceof ZodArray) {
+        const arr = await arrayPrompt(
+            getBrace(
+                '[ ' +
+                    getInputMessage(
+                        0,
+                        'Array of values',
+                        propertyLabel as InputLabel<CompatibleZodArray>,
+                        'Press Ctrl+C to Finalize'
+                    ),
+                indentCount
+            ),
+            schema,
+            indentCount + 1
+        );
+        console.log(getBrace(']', indentCount));
+        return arr as T;
+    }
+
+    throw new Error(`Unsupported schema type.`);
 }
 
 
 
 
+
 /**
- * Generates and runs inquirer prompts based on an inputed schema.
- * 
- * This function traverses the provided Zod schema, dynamically generating prompts for each
- * field based on its type. It supports nested objects, arrays, and various primitive types.
- * Optionally, it allows for confirmation of the collected data and restarting the input process.
+ * Asynchronously prompts the user for input based on a Zod schema and returns the validated data.
  * 
  * Compatible schemas:
  *  Primary Types:
@@ -322,42 +325,35 @@ async function schemaWalker<
  *  Nested Structures:
  *  - `ZodArray`: Prompts for an array of compatible primary types.
  *  - `ZodObject`: Prompts for primary types or nested structures, with a depth limit of 5 levels.
+
  * 
  * @template S - A type extending `CompatibleZodTypes`, representing the Zod schema type.
  * 
- * @param schema - The Zod schema to generate prompts for. The schema defines the structure
- *                 and validation rules for the expected input.
- * @param propertyLabel - An optional mapping of input labels for the schema fields. This can
- *                        be a string, an object with a `value` and `overiteDefault` flag, or
- *                        a nested structure matching the schema's shape.
- * @param doConfirm - A boolean flag indicating whether to prompt the user for confirmation
- *                    after collecting the input. Defaults to `true`.
+ * @param schema - The Zod schema used to validate the user input.
+ * @param propertyLabel - (Optional) A mapping of schema properties to input labels for user prompts.
+ * @param doConfirm - (Optional) A boolean indicating whether to confirm the input before submission. Defaults to `true`.
  * 
- * @returns A promise that resolves to the collected and validated data, matching the inferred
- *          type of the provided schema (`z.infer<S>`).
+ * @returns A promise that resolves to the validated data conforming to the provided schema.
  * 
- * @throws An error if an unsupported schema type is encountered during traversal.
+ * @remarks
+ * - The function uses `schemaWalker` to traverse the schema and collect user input.
+ * - If `doConfirm` is `true`, the user is prompted to confirm their input. If they choose not to confirm, the function restarts the input process.
+ * - The function uses recursion to restart the input process if the user opts to restart.
  * 
  * @example
+ * ```typescript
  * const schema = z.object({
  *   name: z.string(),
  *   age: z.number(),
- *   hobbies: z.array(z.string()),
  * });
  * 
- * const labels = {
- *   name: "Your full name",
- *   age: "Your age",
- *   hobbies: "List your hobbies",
- * };
- * 
- * promptFromZod(schema, labels).then((result) => {
- *   console.log("Collected Data:", result);
- * });
+ * const result = await promptFromZod(schema, { name: "Your Name", age: "Your Age" });
+ * console.log(result);
+ * ```
  */
 async function promptFromZod<
     S extends CompatibleZodTypes,
->(schema: S, propertyLabel?: InputLabelsForSchema<S>, doConfirm: boolean = true): Promise<z.infer<S>> {
+>(schema: S, propertyLabel?: InputLabel<S>, doConfirm: boolean = true): Promise<z.infer<S>> {
     console.log(chalk.red('============================='))
 
     const results = await schemaWalker(schema, propertyLabel)
@@ -379,11 +375,3 @@ async function promptFromZod<
 }
 
 export default promptFromZod;
-
-
-
-// Ensure compatibility with CommonJS
-if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
-    module.exports = promptFromZod;
-    module.exports.default = promptFromZod;
-}
