@@ -58,13 +58,13 @@ type InputLabel = string | InputLabelObject;
  */
 type InputLabelsForSchema<S extends CompatibleZodTypes> =
     S extends ZodObject<infer Shape>
-    ? {
-        [K in keyof Shape]:
-        Shape[K] extends ZodObject<any>
-        ? InputLabelsForSchema<Shape[K]> // recurse for nested objects
-        : InputLabel;                        // otherwise just a label string
-    }
-    : InputLabel;
+        ? {
+            [K in keyof Shape]:
+            Shape[K] extends ZodObject<any>
+                ? {value: string, items: InputLabelsForSchema<Shape[K]>} | InputLabelsForSchema<Shape[K]> // recurse for nested objects
+                : InputLabel;                        // otherwise just a label string
+        }
+        : InputLabel;
 
 
 
