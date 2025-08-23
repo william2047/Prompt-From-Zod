@@ -450,28 +450,3 @@ async function promptFromZod<
 }
 
 export default promptFromZod;
-
-
-const test = z.object({
-    name: z.string().min(1, { message: 'Name is required' }),
-    age: z.number().min(0, { message: 'Age must be a positive number' }),
-    isActive: z.boolean()
-})
-const t2 = z.object({
-    numbers: z.array(z.number().min(0, { message: 'Number must be positive' }))
-})
-
-const t3 = z.number().min(0, { message: 'Number must be positive' })
-
-
-const obj = z.object({
-    t1: test,
-    t2: t2,
-    t3: t3
-})
-
-promptFromZod(obj)
-    .then(result => {
-        console.log('Final Result:', result);
-    })
-    
