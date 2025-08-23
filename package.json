@@ -1,6 +1,6 @@
 {
   "name": "prompt-from-zod",
-  "version": "1.0.0-beta.4",
+  "version": "1.0.0-beta.5",
   "description": "A utility to generate interactive prompts based on Zod schemas, supporting nested structures and validation.",
   "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",
