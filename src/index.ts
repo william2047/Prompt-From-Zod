@@ -278,7 +278,19 @@ async function schemaWalker<S extends CompatibleZodTypes, T = z.infer<S>>(
         for (const key in schema.shape) {
             object[key as keyof T] = await schemaWalker(
                 schema.shape[key],
-                propertyLabel ? (propertyLabel as InputLabel<CompatibleZodObject>).items[key] : undefined,
+                propertyLabel
+                    ? (propertyLabel as InputLabel<CompatibleZodObject>).items[key]
+                    : {
+                        value: key,
+                        overwriteDefault: false,
+                        items: schema.shape[key] instanceof ZodObject
+                            ? Object.keys(schema.shape[key].shape).reduce((acc, k) => {
+                                acc[k] = { value: k, overwriteDefault: false };
+                                return acc;
+                            }, {} as Record<string, InputLabelFull>)
+                            : undefined
+
+                    },
                 indentCount + 1
             );
         }
@@ -375,3 +387,28 @@ async function promptFromZod<
 }
 
 export default promptFromZod;
+
+
+const test = z.object({
+    name: z.string().min(1, { message: 'Name is required' }),
+    age: z.number().min(0, { message: 'Age must be a positive number' }),
+    isActive: z.boolean()
+})
+const t2 = z.object({
+    numbers: z.array(z.number().min(0, { message: 'Number must be positive' }))
+})
+
+const t3 = z.number().min(0, { message: 'Number must be positive' })
+
+
+const obj = z.object({
+    t1: test,
+    t2: t2,
+    t3: t3
+})
+
+promptFromZod(obj)
+    .then(result => {
+        console.log('Final Result:', result);
+    })
+    
