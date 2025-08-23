@@ -356,7 +356,7 @@ async function schemaWalker<S extends CompatibleZodTypes, T = z.infer<S>>(
  * console.log(result); // Outputs the schema if valid, or `false` if invalid.
  * ```
  */
-function schemaValidator(schema: $ZodType<any>, boolReturn: boolean = false): CompatibleZodTypes | boolean{
+export function schemaValidator(schema: $ZodType<any>, boolReturn: boolean = false): CompatibleZodTypes | boolean{
     if(
         (schema instanceof ZodBoolean) ||
         (schema instanceof ZodString) ||
