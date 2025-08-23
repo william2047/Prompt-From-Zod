@@ -1,6 +1,8 @@
-import z, { core, ZodBoolean, ZodNumber, ZodObject, ZodString, ZodArray, ZodEnum } from "zod";
+import z, { core, ZodBoolean, ZodNumber, ZodObject, ZodString, ZodArray, ZodEnum, ZodUnknown, ZodAny, ZodType } from "zod";
 import { confirm, input, select, number, editor } from "@inquirer/prompts";
 import chalk from "chalk";
+import { ZodTypeAny } from "zod/v3";
+import { $ZodArray, $ZodType } from "zod/v4/core";
 
 const indent = '   ' as const; // Define a constant for indentation
 
@@ -321,6 +323,67 @@ async function schemaWalker<S extends CompatibleZodTypes, T = z.infer<S>>(
     throw new Error(`Unsupported schema type.`);
 }
 
+
+/**
+ * Validates a Zod schema and determines if it is compatible with a set of predefined types.
+ *
+ * @template T - The type of the Zod schema being validated.
+ * @param schema - The Zod schema to validate. It can be of any type extending `$ZodType<any>`.
+ * @param boolReturn - A boolean flag indicating the return type of the function:
+ *   - If `true`, the function returns a boolean indicating whether the schema is valid.
+ *   - If `false` (default), the function returns the schema cast to a compatible type if valid, or `false` if invalid.
+ * @returns A boolean or a compatible Zod type:
+ *   - If `boolReturn` is `true`, returns `true` if the schema is valid, otherwise `false`.
+ *   - If `boolReturn` is `false`, returns the schema cast to a compatible type if valid, otherwise `false`.
+ *
+ * @remarks
+ * The function checks if the schema is an instance of specific Zod types (`ZodBoolean`, `ZodString`, `ZodNumber`, `ZodEnum`, `ZodArray`, or `ZodObject`).
+ * For `ZodArray`, it recursively validates the element type.
+ * For `ZodObject`, it validates all properties in the schema's shape.
+ *
+ * @throws This function does not throw exceptions but returns `false` for unsupported or invalid schemas.
+ *
+ * @example
+ * ```typescript
+ * import { z } from "zod";
+ *
+ * const schema = z.object({
+ *   name: z.string(),
+ *   age: z.number(),
+ * });
+ *
+ * const result = schemaValidator(schema);
+ * console.log(result); // Outputs the schema if valid, or `false` if invalid.
+ * ```
+ */
+function schemaValidator(schema: $ZodType<any>, boolReturn: boolean = false): CompatibleZodTypes | boolean{
+    if(
+        (schema instanceof ZodBoolean) ||
+        (schema instanceof ZodString) ||
+        (schema instanceof ZodNumber) ||
+        (schema instanceof ZodEnum)
+    ){
+        return boolReturn? true : schema as CompatibleZodPrimary;
+    }
+    if(schema instanceof ZodArray){
+        return schemaValidator(schema.element)
+            ? boolReturn
+                ? true
+                : (schema as CompatibleZodArray)
+            : false;
+    }
+    if(schema instanceof ZodObject){
+        const shape = schema.shape;
+        for(const key in shape){
+            if(!schemaValidator(shape[key], true)){
+                return false;
+            }
+        }
+        return boolReturn? true : (schema as CompatibleZodObject);
+    }
+
+    return false;
+}
 
 
 
